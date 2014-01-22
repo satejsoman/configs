@@ -40,9 +40,9 @@ source $ZSH/oh-my-zsh.sh
 function precmd()
 {
 	DECORATE=%{%(0?.$fg[green].$fg[red])%}·%{$FX[reset]%}
-	export PROMPT="$DECORATE $FG[237]%n%{%(0?.$fg[green].$fg[red])%}@%{$FG[237]%}%m $DECORATE %{$FG[237]%}$(pwd | sed -e "s:$HOME:~:g;s:/: %{$FX[reset]%}>%{$FG[237]%} :g")%{$FX[reset]%} $DECORATE
-$FG[237] λ %{%(0?.$fg[green].$fg[red])%}>%{$FG[237]%} $FX[reset]"
-    export RPROMPT="$(git_prompt_info) $DECORATE%(10T. .)%(11T. .)%(12T. .)%@ %(1j.$DECORATE %j $FG[237]bg job .)%(2j.s .)%{$FX[reset]%}$DECORATE"
+	export PROMPT="$DECORATE $FG[247]%n%{%(0?.$fg[green].$fg[red])%}@%{$FG[247]%}%m $DECORATE %{$FG[247]%}$(pwd | sed -e "s:$HOME:~:g;s:/: %{$FX[reset]%}>%{$FG[247]%} :g")%{$FX[reset]%} $DECORATE
+$FG[247] λ %{%(0?.$fg[green].$fg[red])%}>%{$FG[247]%} $FX[reset]"
+    export RPROMPT="$(git_prompt_info) $DECORATE$FG[247]%(10T. .)%(11T. .)%(12T. .)%@ %(1j.$DECORATE %j $FG[237]bg job .)%(2j.s .)%{$FX[reset]%}$DECORATE"
 }
 
 
