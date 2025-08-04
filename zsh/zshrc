@@ -23,25 +23,29 @@ COMPLETION_WAITING_DOTS="true"
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
-plugins=(git osx python brew gradle zsh-syntax-highlighting zsh-autosuggestions)
+#plugins=(git osx python brew gradle zsh-syntax-highlighting zsh-autosuggestions virtualenv)
+plugins=(git osx brew gradle zsh-syntax-highlighting zsh-autosuggestions virtualenv)
 source $ZSH/oh-my-zsh.sh
 
 
 # EXPORTS 
-export EDITOR="subl"
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/opt/local/sbin:/usr/local/dev-env/bin
-export GOPATH=~/go-workspace
+export EDITOR="vim"
+export GOPATH=$HOME/go
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/opt/local/sbin:/Users/satej/.local/bin:/usr/local/go/bin
+export PATH=/Library/Frameworks/Python.framework/Versions/3.12/bin:/Users/satej/Library/Python/3.12/bin:$PATH
 
 # ALIASES
-alias octave="/usr/bin/octave --silent"
 alias hgrep="history | grep"
 alias :q="exit"
 alias :r="source ~/.zshrc"
-alias gw="./gradlew"
-alias ls="gls --color"
+alias python="python3.12"
+alias python3="python3.12"
+alias ipython="python3 -c 'import IPython; IPython.terminal.ipapp.launch_new_instance()'"
+alias ipython3="python3 -c 'import IPython; IPython.terminal.ipapp.launch_new_instance()'"
 
 # git aliases
-function clonecd() {  git clone $1 && cd `basename ${1/.git//}` ; }
+function clonecd() {  git clone $1 && cd $(basename ${1/.git//}) ; }
+function mergefrom() { orig=$(git rev-parse --abbrev-ref HEAD) ; git checkout $1 && git pull && git checkout $orig && git merge $1 ; }
 alias status="git status"
 alias add="git add"
 alias push="git push"
@@ -87,69 +91,6 @@ function list_all() {
 }
 chpwd_functions=(omz_termsupport_chpwd list_all)
 
-#JAVA crap
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home
-
-#bash-compatible autocompletion
-autoload bashcompinit
-bashcompinit
-
-compdef _gradlew_tasks gw
-
-_gradle(){
-  local cur=${COMP_WORDS[COMP_CWORD]}
-  local gradle_cmd='gradle'
-  if [[ -x ./gradlew ]]; then
-    gradle_cmd='./gradlew'
-  fi
-  if [[ -x ../gradlew ]]; then
-    gradle_cmd='../gradlew'
-  fi
-   
-  local commands=''
-  local cache_dir="$HOME/.gradle_tabcompletion"
-  mkdir -p $cache_dir
-
-  # TODO: include the gradle version in the checksum? It's kinda slow
-  #local gradle_version=$($gradle_cmd --version --quiet --no-color | grep '^Gradle ' | sed 's/Gradle //g')
-  local gradle_files_checksum='';
-  if [[ -f build.gradle ]]; then # top-level gradle file
-  if [[ -x `which md5 2> /dev/null` ]]; then # mac
-    local all_gradle_files=$(find . -name build.gradle -maxdepth 1 2>/dev/null)
-    gradle_files_checksum=$(md5 -q -s "$(md5 -q $all_gradle_files)")
-    else # linux
-    gradle_files_checksum=($(find . -name build.gradle -maxdepth 1 | xargs md5sum | md5sum))
-  fi
-  else # no top-level gradle file
-    gradle_files_checksum='no_gradle_files'
-  fi
-  if [[ -f $cache_dir/$gradle_files_checksum ]]; then # cached! yay!
-    commands=$(cat $cache_dir/$gradle_files_checksum)
-  else # not cached! boo-urns!
-  alltasks="$($gradle_cmd --no-color --quiet tasks --all | grep -E '^[a-z]' | awk '{print $1}' | sort)"
-  tasks="$(echo "$alltasks" | sed 's/^[^:]*://g' | sort | uniq)"
-  subtasks="$(echo "$alltasks" | grep ':')"
-  commands="$(echo "$tasks"; echo "$subtasks")"
-  if [[ ! -z $commands ]]; then
-    echo "$commands" > $cache_dir/$gradle_files_checksum
-  fi
-  fi
-  if [[ "$cur" != *:* ]]; then
-    # There's no : in the current word, skip sub tasks
-    commands="$(echo "$commands" | sed 's/:[^:]*$/:/g' | uniq)"
-  else
-    # There's a : in the current word, skip normal tasks
-    commands="$(echo "$commands" | grep ':')"
-  fi
-  cur=`echo $cur | sed 's/\\\\//g'`
-  COMPREPLY=( $(compgen -W "$(echo "$commands" | tr '\n' ' ')" -- $cur | sed 's/\\\\//g') )
-} 
-complete -F _gradle gradle
-complete -F _gradle gradlew
-complete -F _gradle ./gradlew 
-complete -F _gradle gw
-
-
 # MAC OS X SPECIFIC SETTINGS
 # show hide all files
 function hidedotfiles(){
@@ -173,17 +114,7 @@ function moon() {
   curl wttr.in/Moon
 }
 
-function mov2gif() { 
-	ffmpeg -i ${1} -pix_fmt rgb24  -f gif ${1/\.mov/\.gif}
-}
-
-function big() {
-    echo $@ | sed -e "s/\([A-Za-z]\)/:-\1:/g" -e "s/ /  /g" -e 's/!/:-bang:/g' -e 's/*/:-splat:/g' -e 's/?/:-question:/g'| pbcopy
-}
-
-source /usr/local/dev-env/bin/profile
 # syntax highlighting
-source /Users/satejs/Desktop/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern)
 ZSH_HIGHLIGHT_STYLES[default]=none
 ZSH_HIGHLIGHT_STYLES[unknown-token]=fg=009
@@ -212,3 +143,11 @@ ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=075,bold'
 ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=074,bold'
 ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=039,bold'
 ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=038,bold'
+source /Users/satej/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/satej/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/satej/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/satej/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/satej/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
