@@ -1,61 +1,58 @@
-# color vars
-eval my_gray='$FG[237]'
-eval my_orange='$FG[220]'
-eval my_lblue='$FG[075]'
+# precmd hook
+precmd_functions+=(hdforce_precmd)
 
-# primary prompt
-function precmd()
-{
-DECORATE=%{%(0?.$FG[106].$FG[009])%}·%{$FX[reset]%}
-if [[ $PWD == $HOME ]]; then
-	DN=""
-	BN="~"
-elif [[ $PWD == / ]]; then
-	DN="›"
-	BN=""
-else
-	dnpwd=$(dirname $PWD)
-	bnpwd=$(basename $PWD)
-	if [[ $dnpwd != "/" ]]; then
-		dnpwd=$dnpwd/
-	fi
-	DN=$(echo $dnpwd | sed -e "s:$HOME:~:g;s:/: %{$FX[reset]%}›%{$FG[102]%} :g")
-	if [[ ${DN[0,1]} == " " ]]; then
-		DN=${DN:1}
-	fi
-	if [[ "$dnpwd" == "$bnpwd" ]]; then
-		BN=""
-	else 
-		BN=$bnpwd
-	fi
-fi
+hdforce_precmd() {
+  # success/failure marker
+  DECORATE="%{%(0?.%F{106}.%F{009})%}·%f"
 
-pwd_info="%{$FX[reset]%}%{$FG[102]%}$DN%{$FG[075]%}$BN%{$FX[reset]%}"
-# prompt_bar="%{%(0?.$FG[106].$FG[009])%}|$FX[reset]"
-prompt_bar="%{%(0?.$FG[106].$FG[009])%}≡$FX[reset]"
-time_info="$FG[102]%T%{$FX[reset]%}"
-bg_info="%(1j.%j $FG[237]bg job .)%(2j.s .)"
+  # build directory display
+  case $PWD in
+    $HOME)
+      DN=""
+      BN="~"
+      ;;
+    /)
+      DN="›"
+      BN=""
+      ;;
+    *)
+      dnpwd=${PWD:h}
+      bnpwd=${PWD:t}
 
-export PROMPT="%{$BG[128]%}$pwd_info $(virtualenv_prompt_info)$(conda_prompt_info) 
-$FX[reset]$prompt_bar "
+      [[ $dnpwd != "/" ]] && dnpwd="$dnpwd/"
 
-export RPROMPT="$(git_prompt_info) $DECORATE $time_info"
+      DN=${dnpwd/#$HOME/~}
+      DN=${DN//\// %{$FX[reset]%}›%F{102} }
+      DN=${DN# }
+
+      [[ $dnpwd == $bnpwd ]] && BN="" || BN=$bnpwd
+      ;;
+  esac
+
+  pwd_info="%{$FX[reset]%}%F{102}$DN%F{75}$BN%{$FX[reset]%}"
+  prompt_bar="%{%(0?.%F{106}.%F{009})%}≡%f"
+  time_info="%F{102}%T%f"
+
+  PROMPT="%K{128}$pwd_info $(virtualenv_prompt_info)$(conda_prompt_info)
+%k$prompt_bar "
+  RPROMPT="$(git_prompt_info) $DECORATE $time_info"
 }
 
-function git_prompt_info() {
-  ref=$(git symbolic-ref HEAD 2> /dev/null) || return
-  pretty_branch=$(echo $(git_current_branch) | sed -e "s:feature/:%{$FG[102]%}feature/%{$FG[220]%}:g" -e "s:bugfix/:%{$FG[102]%}bugfix/%{$FG[220]%}:g")
-  echo "$(parse_git_dirty)$ZSH_THEME_GIT_PROMPT_PREFIX$pretty_branch$ZSH_THEME_GIT_PROMPT_SUFFIX"
+# ============================
+#   Git prompt
+# ============================
+
+git_prompt_info() {
+  git symbolic-ref HEAD >/dev/null 2>&1 || return
+
+  local branch=$(git_current_branch)
+  branch=${branch/feature\//%F{102}feature\/%F{220}}
+  branch=${branch/bugfix\//%F{102}bugfix\/%F{220}}
+
+  echo "$(parse_git_dirty)$ZSH_THEME_GIT_PROMPT_PREFIX$branch$ZSH_THEME_GIT_PROMPT_SUFFIX"
 }
-# git settings
-# ZSH_THEME_GIT_PROMPT_PREFIX="$FG[006]$BG[000]⎇ "
-# ZSH_THEME_GIT_PROMPT_PREFIX="%{$FG[006]$BG[000]%} "
-# ZSH_THEME_GIT_PROMPT_PREFIX="%{$FG[006]$BG[000]%} » "
-# ZSH_THEME_GIT_PROMPT_PREFIX=": %{$FG[006]$BG[000]%}"
-ZSH_THEME_GIT_PROMPT_PREFIX="%{$FG[220]%}"
-# ZSH_THEME_GIT_PROMPT_PREFIX=" %{$FG[006]$BG[000]%}"
+
+ZSH_THEME_GIT_PROMPT_PREFIX="%F{220}"
 ZSH_THEME_GIT_PROMPT_CLEAN="  "
-#ZSH_THEME_GIT_PROMPT_DIRTY="%{$FG[075]%}⍅ %{$reset_color%}"
-ZSH_THEME_GIT_PROMPT_DIRTY="%{$FG[075]%}◈ %{$reset_color%}"
-# ZSH_THEME_GIT_PROMPT_SUFFIX="%{$BG[006]$FG[000]$reset_color%} "
+ZSH_THEME_GIT_PROMPT_DIRTY="%F{75}◈ %f"
 ZSH_THEME_GIT_PROMPT_SUFFIX=""
